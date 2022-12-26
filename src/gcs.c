@@ -28,8 +28,8 @@ int gcs_create_point(gcs_node **node, double x, double y)
         return -1;
     memset(*node, 0, sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
 
-    (*node)->values = (uint8_t *)*node + sizeof(**node);
-    (*node)->fixed = (uint8_t *)*node + sizeof(**node) + sizeof(double) * 2;
+    (*node)->values = (void *)((uint8_t *)*node + sizeof(**node));
+    (*node)->fixed = (void *)((uint8_t *)*node + sizeof(**node) + sizeof(double) * 2);
 
     (*node)->values[0] = x;
     (*node)->values[1] = y;
