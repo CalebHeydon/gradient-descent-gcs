@@ -57,4 +57,4 @@ int gcs_dof_analysis(gcs_graph_t *graph);
 #define GCS_EPSILON 0.0001
 
 double gcs_error(gcs_graph_t *graph);
-int gcs_compute_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters, double *gradient);
+int gcs_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters, double *gradient);

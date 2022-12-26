@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     double *gradient = malloc(sizeof(double) * num_parameters);
     if (!gradient)
         return -1;
-    gcs_compute_gradient(&graph, parameters, num_parameters, gradient);
+    gcs_gradient(&graph, parameters, num_parameters, gradient);
 
     printf("gradient: %f, %f\n", gradient[0], gradient[1]);
 

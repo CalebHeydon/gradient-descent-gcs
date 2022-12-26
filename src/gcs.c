@@ -287,7 +287,7 @@ double gcs_error(gcs_graph_t *graph)
     return error;
 }
 
-int gcs_compute_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters, double *gradient)
+int gcs_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters, double *gradient)
 {
     if (!graph || !parameters || !gradient)
         return -1;
