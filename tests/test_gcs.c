@@ -24,10 +24,12 @@ int main(int argc, char **argv)
     gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_DISTANCE, 1.0, point1, point2, &distance_constraint);
 
     int total_dof = gcs_dof_analysis(&graph);
-
     printf("point1 dof: %d\n", point1->dof);
     printf("point2 dof: %d\n", point2->dof);
     printf("total dof: %d\n", total_dof);
+
+    double error = gcs_error(&graph);
+    printf("error: %f", error);
 
     return 0;
 }

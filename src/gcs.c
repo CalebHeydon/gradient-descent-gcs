@@ -9,6 +9,7 @@ All rights reserved.
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 int gcs_destroy_node(gcs_node_t *node)
 {
@@ -178,12 +179,57 @@ int gcs_dof_analysis(gcs_graph_t *graph)
                 case GCS_CONSTRAINT_TYPE_DISTANCE:
                 case GCS_CONSTRAINT_TYPE_DISTANCE_X:
                 case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
-                default:
                     node->dof -= 1;
                     constraint_dof += constraint->nodes[0] == node;
                     break;
+                default:
+                    return -1;
                 }
     }
 
     return original_dof - constraint_dof;
+}
+
+double gcs_error(gcs_graph_t *graph)
+{
+    if (!graph)
+        return -1.0;
+
+    double error = 0;
+
+    for (gcs_constraint_t *constraint = graph->edges; constraint; constraint = constraint->next)
+        switch (constraint->type)
+        {
+        case GCS_CONSTRAINT_TYPE_DISTANCE:
+            if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
+            {
+                double distance = sqrt(pow(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0], 2) + pow(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1], 2));
+                error += fabs(distance - constraint->value);
+            }
+            else
+                return -1;
+            break;
+        case GCS_CONSTRAINT_TYPE_DISTANCE_X:
+            if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
+            {
+                double distance = fabs(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0]);
+                error += fabs(distance - constraint->value);
+            }
+            else
+                return -1;
+            break;
+        case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
+            if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
+            {
+                double distance = fabs(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1]);
+                error += fabs(distance - constraint->value);
+            }
+            else
+                return -1;
+            break;
+        default:
+            return -1.0;
+        }
+
+    return error;
 }

@@ -51,3 +51,7 @@ int gcs_graph_add_constraint(gcs_graph_t *graph, int type, double value, gcs_nod
 int gcs_graph_delete_constraint(gcs_graph_t *graph, gcs_constraint_t *constraint);
 
 int gcs_dof_analysis(gcs_graph_t *graph);
+
+#define GCS_EPSILON 0.0001
+
+double gcs_error(gcs_graph_t *graph);
