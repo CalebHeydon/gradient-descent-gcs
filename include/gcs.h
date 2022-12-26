@@ -6,6 +6,7 @@ All rights reserved.
 #pragma once
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #define GCS_NODE_TYPE_POINT 0
 
@@ -49,9 +50,11 @@ int gcs_graph_add_node(gcs_graph_t *graph, gcs_node_t *node);
 int gcs_graph_delete_node(gcs_graph_t *graph, gcs_node_t *node);
 int gcs_graph_add_constraint(gcs_graph_t *graph, int type, double value, gcs_node_t *node1, gcs_node_t *node2, gcs_constraint_t **constraint);
 int gcs_graph_delete_constraint(gcs_graph_t *graph, gcs_constraint_t *constraint);
+int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *num_parameters);
 
 int gcs_dof_analysis(gcs_graph_t *graph);
 
 #define GCS_EPSILON 0.0001
 
 double gcs_error(gcs_graph_t *graph);
+int gcs_compute_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters, double *gradient);

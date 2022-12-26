@@ -5,6 +5,8 @@ All rights reserved.
 
 #include <gcs.h>
 #include <stdio.h>
+#include <stddef.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv)
 {
@@ -28,8 +30,16 @@ int main(int argc, char **argv)
     printf("point2 dof: %d\n", point2->dof);
     printf("total dof: %d\n", total_dof);
 
-    double error = gcs_error(&graph);
-    printf("error: %f", error);
+    double **parameters;
+    size_t num_parameters;
+    gcs_graph_get_parameters(&graph, &parameters, &num_parameters);
+
+    double *gradient = malloc(sizeof(double) * num_parameters);
+    if (!gradient)
+        return -1;
+    gcs_compute_gradient(&graph, parameters, num_parameters, gradient);
+
+    printf("gradient: %f, %f\n", gradient[0], gradient[1]);
 
     return 0;
 }
