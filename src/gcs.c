@@ -108,7 +108,7 @@ int gcs_graph_delete_node(gcs_graph_t *graph, gcs_node_t *node)
 
 int gcs_graph_add_constraint(gcs_graph_t *graph, int type, double value, gcs_node_t *node1, gcs_node_t *node2, gcs_constraint_t **constraint)
 {
-    if (!graph || !node1 || !node2)
+    if (!graph || !node1 || !node2 || !constraint)
         return -1;
 
     *constraint = malloc(sizeof(**constraint));
