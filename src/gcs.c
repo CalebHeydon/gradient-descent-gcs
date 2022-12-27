@@ -191,7 +191,7 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *n
         for (int j = 0; j < len; j++)
             if (!node->fixed[j])
             {
-                (*parameters)[i] = node->values;
+                (*parameters)[i] = node->values + j;
                 i++;
             }
     }

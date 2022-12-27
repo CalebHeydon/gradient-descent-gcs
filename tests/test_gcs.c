@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     printf("point2 dof: %d\n", point2->dof);
     printf("total dof: %d\n", total_dof);
 
-    int iterations = gcs_solve(&graph, 0.01, 100);
+    int iterations = gcs_solve(&graph, 0.01, 1000);
     printf("iterations: %d\n", iterations);
     printf("point2: %f, %f\n", point2->values[0], point2->values[1]);
 
