@@ -12,10 +12,10 @@ target_link_libraries(gcs)
 file(GLOB TEST_GCS_SOURCES "tests/test_gcs.c")
 add_executable(test_gcs ${TEST_GCS_SOURCES})
 
-if (WIN32)
+if(WIN32)
     set(MATH "")
-else ()
+else()
     set(MATH "m")
-endif ()
+endif()
 
 target_link_libraries(test_gcs gcs ${MATH})
