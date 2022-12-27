@@ -13,13 +13,13 @@ int main(int argc, char **argv)
     gcs_graph_t graph = {0};
 
     gcs_node_t *point1;
-    gcs_create_point(&point1, 0, 0);
+    gcs_node_create_point(&point1, 0, 0);
     point1->fixed[0] = true;
     point1->fixed[1] = true;
     gcs_graph_add_node(&graph, point1);
 
     gcs_node_t *point2;
-    gcs_create_point(&point2, 1.0, 1.0);
+    gcs_node_create_point(&point2, 1.0, 1.0);
     gcs_graph_add_node(&graph, point2);
 
     gcs_constraint_t *distance_constraint;
@@ -33,6 +33,10 @@ int main(int argc, char **argv)
     int iterations = gcs_solve(&graph, 0.01, 100);
     printf("iterations: %d\n", iterations);
     printf("point2: %f, %f\n", point2->values[0], point2->values[1]);
+
+    gcs_graph_destroy(&graph);
+    gcs_node_destroy(point2);
+    gcs_node_destroy(point1);
 
     return 0;
 }

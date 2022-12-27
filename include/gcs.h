@@ -18,8 +18,8 @@ typedef struct gcs_node
     int dof;
 } gcs_node_t;
 
-int gcs_destroy_node(gcs_node_t *node);
-int gcs_create_point(gcs_node_t **node, double x, double y);
+int gcs_node_destroy(gcs_node_t *node);
+int gcs_node_create_point(gcs_node_t **node, double x, double y);
 
 #define GCS_CONSTRAINT_TYPE_DISTANCE 0
 #define GCS_CONSTRAINT_TYPE_DISTANCE_X 1
@@ -51,6 +51,7 @@ int gcs_graph_delete_node(gcs_graph_t *graph, gcs_node_t *node);
 int gcs_graph_add_constraint(gcs_graph_t *graph, int type, double value, gcs_node_t *node1, gcs_node_t *node2, gcs_constraint_t **constraint);
 int gcs_graph_delete_constraint(gcs_graph_t *graph, gcs_constraint_t *constraint);
 int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *num_parameters);
+int gcs_graph_destroy(gcs_graph_t *graph);
 
 int gcs_dof_analysis(gcs_graph_t *graph);
 

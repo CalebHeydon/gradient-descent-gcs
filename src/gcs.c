@@ -12,7 +12,7 @@ All rights reserved.
 #include <stddef.h>
 #include <math.h>
 
-int gcs_destroy_node(gcs_node_t *node)
+int gcs_node_destroy(gcs_node_t *node)
 {
     if (!node)
         return -1;
@@ -21,7 +21,7 @@ int gcs_destroy_node(gcs_node_t *node)
     return 0;
 }
 
-int gcs_create_point(gcs_node_t **node, double x, double y)
+int gcs_node_create_point(gcs_node_t **node, double x, double y)
 {
     if (!node)
         return -1;
@@ -194,6 +194,20 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *n
                 (*parameters)[i] = node->values;
                 i++;
             }
+    }
+
+    return 0;
+}
+
+int gcs_graph_destroy(gcs_graph_t *graph)
+{
+    gcs_graph_node_t *next_node;
+    for (gcs_graph_node_t *graph_node = graph->nodes; graph_node; graph_node = next_node)
+    {
+        next_node = graph_node->next;
+
+        if (gcs_graph_delete_node(graph, graph_node->node))
+            return -1;
     }
 
     return 0;
