@@ -30,16 +30,9 @@ int main(int argc, char **argv)
     printf("point2 dof: %d\n", point2->dof);
     printf("total dof: %d\n", total_dof);
 
-    double **parameters;
-    size_t num_parameters;
-    gcs_graph_get_parameters(&graph, &parameters, &num_parameters);
-
-    double *gradient = malloc(sizeof(double) * num_parameters);
-    if (!gradient)
-        return -1;
-    gcs_gradient(&graph, parameters, num_parameters, gradient);
-
-    printf("gradient: %f, %f\n", gradient[0], gradient[1]);
+    int iterations = gcs_solve(&graph, 0.01, 100);
+    printf("iterations: %d\n", iterations);
+    printf("point2: %f, %f\n", point2->values[0], point2->values[1]);
 
     return 0;
 }

@@ -256,7 +256,7 @@ double gcs_error(gcs_graph_t *graph)
         case GCS_CONSTRAINT_TYPE_DISTANCE:
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
-                double distance = sqrt(pow(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0], 2) + pow(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1], 2));
+                double distance = sqrt(pow(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0], 2.0) + pow(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1], 2.0));
                 error += fabs(distance - constraint->value);
             }
             else
@@ -316,4 +316,41 @@ int gcs_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters,
     free(backup);
 
     return 0;
+}
+
+int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations)
+{
+    if (!graph)
+        return -1;
+
+    double **parameters;
+    size_t num_parameters;
+    if (gcs_graph_get_parameters(graph, &parameters, &num_parameters))
+        return -1;
+
+    double *gradient = malloc(sizeof(double) * num_parameters);
+    if (!gradient)
+        return -1;
+
+    int i;
+    for (i = 0; i < max_iterations; i++)
+    {
+        if (gcs_gradient(graph, parameters, num_parameters, gradient))
+            return -1;
+
+        double sum = 0;
+        for (int j = 0; j < num_parameters; j++)
+            sum += pow(gradient[j], 2.0);
+        double magnitude = sqrt(sum);
+        if (magnitude < GCS_EPSILON)
+            break;
+
+        for (int j = 0; j < num_parameters; j++)
+            (*parameters)[j] -= rate * gradient[j];
+    }
+
+    free(gradient);
+    free(parameters);
+
+    return i;
 }

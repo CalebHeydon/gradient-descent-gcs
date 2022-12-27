@@ -58,3 +58,4 @@ int gcs_dof_analysis(gcs_graph_t *graph);
 
 double gcs_error(gcs_graph_t *graph);
 int gcs_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters, double *gradient);
+int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations);
