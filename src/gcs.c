@@ -313,9 +313,6 @@ int gcs_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters,
         gradient[i] = (epsilon_error - error) / GCS_EPSILON;
     }
 
-    for (int i = 0; i < num_parameters; i++)
-        (*parameters)[i] = backup[i];
-
     free(backup);
 
     return 0;
