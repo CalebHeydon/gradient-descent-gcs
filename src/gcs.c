@@ -271,7 +271,7 @@ double gcs_error(gcs_graph_t *graph)
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
                 double distance = sqrt(pow(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0], 2.0) + pow(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1], 2.0));
-                error += fabs(distance - constraint->value);
+                error += fabs(pow(distance - constraint->value, 2.0));
             }
             else
                 return -1.0;
@@ -280,7 +280,7 @@ double gcs_error(gcs_graph_t *graph)
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
                 double distance = fabs(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0]);
-                error += fabs(distance - constraint->value);
+                error += fabs(pow(distance - constraint->value, 2.0));
             }
             else
                 return -1.0;
@@ -289,7 +289,7 @@ double gcs_error(gcs_graph_t *graph)
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
                 double distance = fabs(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1]);
-                error += fabs(distance - constraint->value);
+                error += fabs(pow(distance - constraint->value, 2.0));
             }
             else
                 return -1.0;
