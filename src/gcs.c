@@ -26,13 +26,13 @@ int gcs_node_create_point(gcs_node_t **node, double x, double y)
     if (!node)
         return -1;
 
-    *node = malloc(sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
+    *node = malloc(sizeof(gcs_node_t) + sizeof(double) * 2 + sizeof(bool) * 2);
     if (!*node)
         return -1;
-    memset(*node, 0, sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
+    memset(*node, 0, sizeof(gcs_node_t) + sizeof(double) * 2 + sizeof(bool) * 2);
 
-    (*node)->values = (void *)((uint8_t *)*node + sizeof(**node));
-    (*node)->fixed = (void *)((uint8_t *)*node + sizeof(**node) + sizeof(double) * 2);
+    (*node)->values = (void *)((uint8_t *)*node + sizeof(gcs_node_t));
+    (*node)->fixed = (void *)((uint8_t *)*node + sizeof(gcs_node_t) + sizeof(double) * 2);
 
     (*node)->values[0] = x;
     (*node)->values[1] = y;
@@ -47,13 +47,13 @@ int gcs_node_create_line(gcs_node_t **node, double theta, double distance)
     if (!node)
         return -1;
 
-    *node = malloc(sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
+    *node = malloc(sizeof(gcs_node_t) + sizeof(double) * 2 + sizeof(bool) * 2);
     if (!*node)
         return -1;
-    memset(*node, 0, sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
+    memset(*node, 0, sizeof(gcs_node_t) + sizeof(double) * 2 + sizeof(bool) * 2);
 
-    (*node)->values = (void *)((uint8_t *)*node + sizeof(**node));
-    (*node)->fixed = (void *)((uint8_t *)*node + sizeof(**node) + sizeof(double) * 2);
+    (*node)->values = (void *)((uint8_t *)*node + sizeof(gcs_node_t));
+    (*node)->fixed = (void *)((uint8_t *)*node + sizeof(gcs_node_t) + sizeof(double) * 2);
 
     (*node)->values[0] = theta;
     (*node)->values[1] = distance;
@@ -80,10 +80,10 @@ int gcs_graph_add_node(gcs_graph_t *graph, gcs_node_t *node)
     if (!graph || !node || gcs_graph_contains_node(graph, node))
         return -1;
 
-    gcs_graph_node_t *graph_node = malloc(sizeof(*graph_node));
+    gcs_graph_node_t *graph_node = malloc(sizeof(gcs_graph_node_t));
     if (!graph_node)
         return -1;
-    memset(graph_node, 0, sizeof(*graph_node));
+    memset(graph_node, 0, sizeof(gcs_graph_node_t));
     graph_node->node = node;
 
     if (graph->nodes)
@@ -132,10 +132,10 @@ int gcs_graph_add_constraint(gcs_graph_t *graph, int type, double value, gcs_nod
     if (!graph || !node1 || !node2 || !constraint)
         return -1;
 
-    *constraint = malloc(sizeof(**constraint));
+    *constraint = malloc(sizeof(gcs_constraint_t));
     if (!*constraint)
         return -1;
-    memset(*constraint, 0, sizeof(**constraint));
+    memset(*constraint, 0, sizeof(gcs_constraint_t));
 
     (*constraint)->type = type;
     (*constraint)->value = value;
@@ -206,7 +206,7 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, gcs_parameter_t **parameters, s
             *num_parameters += !node->fixed[i];
     }
 
-    *parameters = malloc(sizeof(**parameters) * *num_parameters);
+    *parameters = malloc(sizeof(gcs_parameter_t) * *num_parameters);
     if (!*parameters)
         return -1;
 
@@ -416,7 +416,7 @@ int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations)
     if (gcs_graph_get_parameters(graph, &parameters, &num_parameters))
         return -1;
 
-    double *gradient = malloc(sizeof(*gradient) * num_parameters);
+    double *gradient = malloc(sizeof(double) * num_parameters);
     if (!gradient)
         return -1;
 
