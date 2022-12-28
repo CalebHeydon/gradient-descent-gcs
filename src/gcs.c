@@ -31,6 +31,8 @@ int gcs_node_create_point(gcs_node_t **node, double x, double y)
         return -1;
     memset(*node, 0, sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
 
+    (*node)->type = GCS_NODE_TYPE_POINT;
+
     (*node)->values = (void *)((uint8_t *)*node + sizeof(**node));
     (*node)->fixed = (void *)((uint8_t *)*node + sizeof(**node) + sizeof(double) * 2);
 
@@ -51,6 +53,8 @@ int gcs_node_create_line(gcs_node_t **node, double theta, double distance)
     if (!*node)
         return -1;
     memset(*node, 0, sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
+
+    (*node)->type = GCS_NODE_TYPE_LINE;
 
     (*node)->values = (void *)((uint8_t *)*node + sizeof(**node));
     (*node)->fixed = (void *)((uint8_t *)*node + sizeof(**node) + sizeof(double) * 2);

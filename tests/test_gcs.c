@@ -37,9 +37,12 @@ int main(int argc, char **argv)
     gcs_constraint_t *distance_constraint;
     gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_DISTANCE, 1.0, origin, point, &distance_constraint);
 
+    gcs_constraint_t *coincident_constraint;
+    gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_DISTANCE, 0, x_axis, point, &coincident_constraint);
+
     int total_dof = gcs_dof_analysis(&graph);
     printf("point dof: %d\n", point->dof);
-    printf("total dof: %d\n", total_dof);
+    printf("system dof: %d\n", total_dof);
 
     int iterations = gcs_solve(&graph, 0.01, 1000);
     printf("iterations: %d\n", iterations);
