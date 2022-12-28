@@ -42,6 +42,27 @@ int gcs_node_create_point(gcs_node_t **node, double x, double y)
     return 0;
 }
 
+int gcs_node_create_line(gcs_node_t **node, double theta, double distance)
+{
+    if (!node)
+        return -1;
+
+    *node = malloc(sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
+    if (!*node)
+        return -1;
+    memset(*node, 0, sizeof(**node) + sizeof(double) * 2 + sizeof(bool) * 2);
+
+    (*node)->values = (void *)((uint8_t *)*node + sizeof(**node));
+    (*node)->fixed = (void *)((uint8_t *)*node + sizeof(**node) + sizeof(double) * 2);
+
+    (*node)->values[0] = theta;
+    (*node)->values[1] = distance;
+
+    (*node)->dof = 2;
+
+    return 0;
+}
+
 bool gcs_graph_contains_node(gcs_graph_t *graph, gcs_node_t *node)
 {
     if (!graph || !graph->nodes || !node)
@@ -147,7 +168,21 @@ int gcs_graph_delete_constraint(gcs_graph_t *graph, gcs_constraint_t *constraint
     return -1;
 }
 
-int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *num_parameters)
+int gcs_graph_destroy(gcs_graph_t *graph)
+{
+    gcs_graph_node_t *next_node;
+    for (gcs_graph_node_t *graph_node = graph->nodes; graph_node; graph_node = next_node)
+    {
+        next_node = graph_node->next;
+
+        if (gcs_graph_delete_node(graph, graph_node->node))
+            return -1;
+    }
+
+    return 0;
+}
+
+int gcs_graph_get_parameters(gcs_graph_t *graph, gcs_parameter_t **parameters, size_t *num_parameters)
 {
     if (!graph || !parameters || !num_parameters)
         return -1;
@@ -160,6 +195,7 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *n
         switch (node->type)
         {
         case GCS_NODE_TYPE_POINT:
+        case GCS_NODE_TYPE_LINE:
             len = 2;
             break;
         default:
@@ -182,6 +218,7 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *n
         switch (node->type)
         {
         case GCS_NODE_TYPE_POINT:
+        case GCS_NODE_TYPE_LINE:
             len = 2;
             break;
         default:
@@ -191,23 +228,10 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, double ***parameters, size_t *n
         for (int j = 0; j < len; j++)
             if (!node->fixed[j])
             {
-                (*parameters)[i] = node->values + j;
+                (*parameters)[i].type = node->type == GCS_NODE_TYPE_LINE && j == 0 ? GCS_PARAMETER_TYPE_ANGLE : GCS_PARAMETER_TYPE_DISTANCE;
+                (*parameters)[i].value = node->values + j;
                 i++;
             }
-    }
-
-    return 0;
-}
-
-int gcs_graph_destroy(gcs_graph_t *graph)
-{
-    gcs_graph_node_t *next_node;
-    for (gcs_graph_node_t *graph_node = graph->nodes; graph_node; graph_node = next_node)
-    {
-        next_node = graph_node->next;
-
-        if (gcs_graph_delete_node(graph, graph_node->node))
-            return -1;
     }
 
     return 0;
@@ -228,6 +252,7 @@ int gcs_dof_analysis(gcs_graph_t *graph)
         switch (node->type)
         {
         case GCS_NODE_TYPE_POINT:
+        case GCS_NODE_TYPE_LINE:
         default:
             node->dof = 2;
             break;
@@ -257,6 +282,32 @@ int gcs_dof_analysis(gcs_graph_t *graph)
     return original_dof - constraint_dof;
 }
 
+double gcs_distance_two_points(gcs_node_t *point1, gcs_node_t *point2)
+{
+    if (!point1 || !point2)
+        return -1.0;
+
+    return sqrt(pow(point2->values[0] - point1->values[0], 2.0) + pow(point2->values[1] - point1->values[1], 2.0));
+}
+
+double gcs_distance_line_point(gcs_node_t *line, gcs_node_t *point)
+{
+    if (!line || !point)
+        return -1.0;
+
+    if (line->values[0] == GCS_PI / 2 || line->values[0] == (3 * GCS_PI) / 2)
+        return fabs(line->values[1] - point->values[0]);
+
+    double a = tan(line->values[0]);
+    double b = -1.0;
+    double c = line->values[1] / cos(line->values[0]);
+
+    double x = point->values[0];
+    double y = point->values[1];
+
+    return fabs(a * x + b * y + c) / sqrt(pow(a, 2.0) + pow(b, 2.0));
+}
+
 double gcs_error(gcs_graph_t *graph)
 {
     if (!graph)
@@ -270,7 +321,14 @@ double gcs_error(gcs_graph_t *graph)
         case GCS_CONSTRAINT_TYPE_DISTANCE:
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
-                double distance = sqrt(pow(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0], 2.0) + pow(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1], 2.0));
+                double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
+                error += fabs(pow(distance - constraint->value, 2.0));
+            }
+            else if ((constraint->nodes[0]->type == GCS_NODE_TYPE_LINE && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT) || (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_LINE))
+            {
+                gcs_node_t *line = constraint->nodes[0]->type == GCS_NODE_TYPE_LINE ? constraint->nodes[0] : constraint->nodes[1];
+                gcs_node_t *point = constraint->nodes[1]->type == GCS_NODE_TYPE_POINT ? constraint->nodes[1] : constraint->nodes[0];
+                double distance = gcs_distance_line_point(line, point);
                 error += fabs(pow(distance - constraint->value, 2.0));
             }
             else
@@ -279,7 +337,7 @@ double gcs_error(gcs_graph_t *graph)
         case GCS_CONSTRAINT_TYPE_DISTANCE_X:
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
-                double distance = fabs(constraint->nodes[1]->values[0] - constraint->nodes[0]->values[0]);
+                double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
                 error += fabs(pow(distance - constraint->value, 2.0));
             }
             else
@@ -288,7 +346,7 @@ double gcs_error(gcs_graph_t *graph)
         case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
-                double distance = fabs(constraint->nodes[1]->values[1] - constraint->nodes[0]->values[1]);
+                double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
                 error += fabs(pow(distance - constraint->value, 2.0));
             }
             else
@@ -301,16 +359,30 @@ double gcs_error(gcs_graph_t *graph)
     return error;
 }
 
-int gcs_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters, double *gradient)
+double gcs_normalize_angle(double angle)
+{
+    while (angle > 2 * GCS_PI)
+        angle -= 2 * GCS_PI;
+    while (angle < 0)
+        angle += 2 * GCS_PI;
+
+    return angle;
+}
+
+int gcs_gradient(gcs_graph_t *graph, gcs_parameter_t *parameters, size_t num_parameters, double *gradient)
 {
     if (!graph || !parameters || !gradient)
         return -1;
 
-    double *backup = malloc(sizeof(double) * num_parameters);
+    for (int i = 0; i < num_parameters; i++)
+        if (parameters[i].type == GCS_PARAMETER_TYPE_ANGLE)
+            *(parameters[i].value) = gcs_normalize_angle(*(parameters[i].value));
+
+    double *backup = malloc(sizeof(*backup) * num_parameters);
     if (!backup)
         return -1;
     for (int i = 0; i < num_parameters; i++)
-        backup[i] = (*parameters)[i];
+        backup[i] = *(parameters[i].value);
 
     double error = gcs_error(graph);
     if (error < 0)
@@ -318,11 +390,13 @@ int gcs_gradient(gcs_graph_t *graph, double **parameters, size_t num_parameters,
 
     for (int i = 0; i < num_parameters; i++)
     {
-        (*parameters)[i] += GCS_EPSILON;
+        *(parameters[i].value) += GCS_EPSILON;
+        if (parameters[i].type == GCS_PARAMETER_TYPE_ANGLE)
+            *(parameters[i].value) = gcs_normalize_angle(*(parameters[i].value));
         double epsilon_error = gcs_error(graph);
         if (epsilon_error < 0)
             return -1;
-        (*parameters)[i] = backup[i];
+        *(parameters[i].value) = backup[i];
 
         gradient[i] = (epsilon_error - error) / GCS_EPSILON;
     }
@@ -337,12 +411,12 @@ int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations)
     if (!graph)
         return -1;
 
-    double **parameters;
+    gcs_parameter_t *parameters;
     size_t num_parameters;
     if (gcs_graph_get_parameters(graph, &parameters, &num_parameters))
         return -1;
 
-    double *gradient = malloc(sizeof(double) * num_parameters);
+    double *gradient = malloc(sizeof(*gradient) * num_parameters);
     if (!gradient)
         return -1;
 
@@ -360,7 +434,9 @@ int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations)
             break;
 
         for (int j = 0; j < num_parameters; j++)
-            (*parameters)[j] -= rate * gradient[j];
+            *(parameters[j].value) -= rate * gradient[j];
+        if (parameters[i].type == GCS_PARAMETER_TYPE_ANGLE)
+            *(parameters[i].value) = gcs_normalize_angle(*(parameters[i].value));
     }
 
     free(gradient);
