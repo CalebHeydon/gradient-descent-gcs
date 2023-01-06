@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022, Caleb Heydon
+Copyright (c) 2023, Caleb Heydon
 All rights reserved.
 */
 
@@ -26,6 +26,7 @@ int gcs_node_create_line(gcs_node_t **node, double theta, double distance);
 #define GCS_CONSTRAINT_TYPE_DISTANCE 0
 #define GCS_CONSTRAINT_TYPE_DISTANCE_X 1
 #define GCS_CONSTRAINT_TYPE_DISTANCE_Y 2
+#define GCS_CONSTRAINT_TYPE_ANGLE 3
 
 typedef struct gcs_constraint
 {
@@ -74,6 +75,7 @@ double gcs_normalize_angle(double angle);
 
 double gcs_distance_two_points(gcs_node_t *point1, gcs_node_t *point2);
 double gcs_distance_line_point(gcs_node_t *line, gcs_node_t *point);
+double gcs_angle_two_lines(gcs_node_t *line1, gcs_node_t *line2);
 double gcs_error(gcs_graph_t *graph);
 int gcs_gradient(gcs_graph_t *graph, gcs_parameter_t *parameters, size_t num_parameters, double *gradient);
 int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations);

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022, Caleb Heydon
+Copyright (c) 2023, Caleb Heydon
 All rights reserved.
 */
 
@@ -26,7 +26,6 @@ int main(int argc, char **argv)
 
     gcs_node_t *y_axis;
     gcs_node_create_line(&y_axis, GCS_PI / 2, 0);
-    y_axis->fixed[0] = true;
     y_axis->fixed[1] = true;
     gcs_graph_add_node(&graph, y_axis);
 
@@ -34,11 +33,14 @@ int main(int argc, char **argv)
     gcs_node_create_point(&point, 1.0, 1.0);
     gcs_graph_add_node(&graph, point);
 
+    gcs_constraint_t *angle_constraint;
+    gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_ANGLE, 2 * GCS_PI, x_axis, y_axis, &angle_constraint);
+
     gcs_constraint_t *distance_constraint;
     gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_DISTANCE, 1.0, origin, point, &distance_constraint);
 
     gcs_constraint_t *coincident_constraint;
-    gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_DISTANCE, 0, x_axis, point, &coincident_constraint);
+    gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_DISTANCE, 0, y_axis, point, &coincident_constraint);
 
     int total_dof = gcs_dof_analysis(&graph);
     printf("point dof: %d\n", point->dof);

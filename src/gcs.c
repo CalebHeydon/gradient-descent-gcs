@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022, Caleb Heydon
+Copyright (c) 2023, Caleb Heydon
 All rights reserved.
 */
 
@@ -275,6 +275,7 @@ int gcs_dof_analysis(gcs_graph_t *graph)
                 case GCS_CONSTRAINT_TYPE_DISTANCE:
                 case GCS_CONSTRAINT_TYPE_DISTANCE_X:
                 case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
+                case GCS_CONSTRAINT_TYPE_ANGLE:
                     node->dof -= 1;
                     constraint_dof += constraint->nodes[0] == node;
                     break;
@@ -312,6 +313,14 @@ double gcs_distance_line_point(gcs_node_t *line, gcs_node_t *point)
     return fabs(a * x + b * y + c) / sqrt(pow(a, 2.0) + pow(b, 2.0));
 }
 
+double gcs_angle_two_lines(gcs_node_t *line1, gcs_node_t *line2)
+{
+    if (!line1 || !line2)
+        return -1.0;
+
+    return fabs(line1->values[0] - line2->values[0]);
+}
+
 double gcs_error(gcs_graph_t *graph)
 {
     if (!graph)
@@ -333,7 +342,7 @@ double gcs_error(gcs_graph_t *graph)
                 gcs_node_t *line = constraint->nodes[0]->type == GCS_NODE_TYPE_LINE ? constraint->nodes[0] : constraint->nodes[1];
                 gcs_node_t *point = constraint->nodes[1]->type == GCS_NODE_TYPE_POINT ? constraint->nodes[1] : constraint->nodes[0];
                 double distance = gcs_distance_line_point(line, point);
-                error += fabs(pow(distance - constraint->value, 2.0));
+                error += pow(distance - constraint->value, 2.0);
             }
             else
                 return -1.0;
@@ -342,7 +351,7 @@ double gcs_error(gcs_graph_t *graph)
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
                 double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
-                error += fabs(pow(distance - constraint->value, 2.0));
+                error += pow(distance - constraint->value, 2.0);
             }
             else
                 return -1.0;
@@ -351,7 +360,16 @@ double gcs_error(gcs_graph_t *graph)
             if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
             {
                 double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
-                error += fabs(pow(distance - constraint->value, 2.0));
+                error += pow(distance - constraint->value, 2.0);
+            }
+            else
+                return -1.0;
+            break;
+        case GCS_CONSTRAINT_TYPE_ANGLE:
+            if (constraint->nodes[0]->type == GCS_NODE_TYPE_LINE && constraint->nodes[1]->type == GCS_NODE_TYPE_LINE)
+            {
+                double angle = gcs_angle_two_lines(constraint->nodes[0], constraint->nodes[1]);
+                error += pow(fmin(fabs(angle - constraint->value), fabs((2 * GCS_PI - angle) - constraint->value)), 2.0);
             }
             else
                 return -1.0;
