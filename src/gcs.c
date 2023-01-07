@@ -307,6 +307,13 @@ int gcs_dof_analysis(gcs_graph_t *graph)
                 switch (constraint->type)
                 {
                 case GCS_CONSTRAINT_TYPE_DISTANCE:
+                    if ((constraint->nodes[0]->type == GCS_NODE_TYPE_POINT || constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE) && (constraint->nodes[1]->type == GCS_NODE_TYPE_POINT || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE))
+                    {
+                        int lost = constraint->value == 0 ? 2 : 1;
+                        node->dof -= lost;
+                        constraint_dof += constraint->nodes[0] == node ? lost : 0;
+                        break;
+                    }
                 case GCS_CONSTRAINT_TYPE_DISTANCE_X:
                 case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
                 case GCS_CONSTRAINT_TYPE_ANGLE:
