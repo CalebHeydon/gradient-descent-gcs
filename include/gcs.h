@@ -29,9 +29,8 @@ int gcs_node_create_circle(gcs_node_t **node, double x, double y, double r);
 #define GCS_CONSTRAINT_TYPE_DISTANCE_X 1
 #define GCS_CONSTRAINT_TYPE_DISTANCE_Y 2
 #define GCS_CONSTRAINT_TYPE_ANGLE 3
-#define GCS_CONSTRAINT_TYPE_RADIUS 4
-#define GCS_CONSTRAINT_TYPE_ON_EDGE 5
-#define GCS_CONSTRAINT_TYPE_TANGENT 6
+#define GCS_CONSTRAINT_TYPE_ON_EDGE 4
+#define GCS_CONSTRAINT_TYPE_TANGENT 5
 
 typedef struct gcs_constraint
 {

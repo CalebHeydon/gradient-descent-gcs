@@ -310,7 +310,6 @@ int gcs_dof_analysis(gcs_graph_t *graph)
                 case GCS_CONSTRAINT_TYPE_DISTANCE_X:
                 case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
                 case GCS_CONSTRAINT_TYPE_ANGLE:
-                case GCS_CONSTRAINT_TYPE_RADIUS:
                 case GCS_CONSTRAINT_TYPE_ON_EDGE:
                 case GCS_CONSTRAINT_TYPE_TANGENT:
                     node->dof -= 1;
@@ -407,15 +406,6 @@ double gcs_error(gcs_graph_t *graph)
             {
                 double angle = gcs_angle_two_lines(constraint->nodes[0], constraint->nodes[1]);
                 error += pow(fmin(fabs(angle - constraint->value), fabs((2 * GCS_PI - angle) - constraint->value)), 2.0);
-            }
-            else
-                return -1.0;
-            break;
-        case GCS_CONSTRAINT_TYPE_RADIUS:
-            if (constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE)
-            {
-                double radius = constraint->nodes[0]->values[2];
-                error += pow(radius - constraint->value, 2.0);
             }
             else
                 return -1.0;

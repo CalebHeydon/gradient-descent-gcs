@@ -30,7 +30,8 @@ int main(int argc, char **argv)
     gcs_graph_add_node(&graph, y_axis);
 
     gcs_node_t *circle;
-    gcs_node_create_circle(&circle, 1.0, 1.0, 1.0);
+    gcs_node_create_circle(&circle, 1.0, 1.0, 0.5);
+    circle->fixed[2] = true;
     gcs_graph_add_node(&graph, circle);
 
     gcs_node_t *line;
@@ -39,9 +40,6 @@ int main(int argc, char **argv)
 
     gcs_constraint_t *angle_constraint;
     gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_ANGLE, GCS_PI / 2.0, x_axis, y_axis, &angle_constraint);
-
-    gcs_constraint_t *radius_constraint;
-    gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_RADIUS, 0.5, circle, NULL, &radius_constraint);
 
     gcs_constraint_t *distance_constraint;
     gcs_graph_add_constraint(&graph, GCS_CONSTRAINT_TYPE_DISTANCE, 1.0, origin, circle, &distance_constraint);
