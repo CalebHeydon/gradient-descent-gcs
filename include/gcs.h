@@ -10,6 +10,7 @@ All rights reserved.
 
 #define GCS_NODE_TYPE_POINT 0
 #define GCS_NODE_TYPE_LINE 1
+#define GCS_NODE_TYPE_CIRCLE 2
 
 typedef struct gcs_node
 {
@@ -22,11 +23,15 @@ typedef struct gcs_node
 int gcs_node_destroy(gcs_node_t *node);
 int gcs_node_create_point(gcs_node_t **node, double x, double y);
 int gcs_node_create_line(gcs_node_t **node, double theta, double distance);
+int gcs_node_create_circle(gcs_node_t **node, double x, double y, double r);
 
 #define GCS_CONSTRAINT_TYPE_DISTANCE 0
 #define GCS_CONSTRAINT_TYPE_DISTANCE_X 1
 #define GCS_CONSTRAINT_TYPE_DISTANCE_Y 2
 #define GCS_CONSTRAINT_TYPE_ANGLE 3
+#define GCS_CONSTRAINT_TYPE_RADIUS 4
+#define GCS_CONSTRAINT_TYPE_ON_EDGE 5
+#define GCS_CONSTRAINT_TYPE_TANGENT 6
 
 typedef struct gcs_constraint
 {
@@ -68,7 +73,7 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, gcs_parameter_t **parameters, s
 
 int gcs_dof_analysis(gcs_graph_t *graph);
 
-#define GCS_EPSILON 0.0001
+#define GCS_EPSILON 0.00001
 #define GCS_PI 3.14159265358979323846
 
 double gcs_normalize_angle(double angle);

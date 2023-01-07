@@ -67,6 +67,30 @@ int gcs_node_create_line(gcs_node_t **node, double theta, double distance)
     return 0;
 }
 
+int gcs_node_create_circle(gcs_node_t **node, double x, double y, double r)
+{
+    if (!node)
+        return -1;
+
+    *node = malloc(sizeof(**node) + sizeof(double) * 3 + sizeof(bool) * 3);
+    if (!*node)
+        return -1;
+    memset(*node, 0, sizeof(**node) + sizeof(double) * 3 + sizeof(bool) * 3);
+
+    (*node)->type = GCS_NODE_TYPE_CIRCLE;
+
+    (*node)->values = (void *)((uint8_t *)*node + sizeof(**node));
+    (*node)->fixed = (void *)((uint8_t *)*node + sizeof(**node) + sizeof(double) * 3);
+
+    (*node)->values[0] = x;
+    (*node)->values[1] = y;
+    (*node)->values[2] = r;
+
+    (*node)->dof = 3;
+
+    return 0;
+}
+
 bool gcs_graph_contains_node(gcs_graph_t *graph, gcs_node_t *node)
 {
     if (!graph || !graph->nodes || !node)
@@ -133,7 +157,7 @@ int gcs_graph_delete_node(gcs_graph_t *graph, gcs_node_t *node)
 
 int gcs_graph_add_constraint(gcs_graph_t *graph, int type, double value, gcs_node_t *node1, gcs_node_t *node2, gcs_constraint_t **constraint)
 {
-    if (!graph || !node1 || !node2 || !constraint)
+    if (!graph || !node1 || !constraint)
         return -1;
 
     *constraint = malloc(sizeof(**constraint));
@@ -202,6 +226,9 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, gcs_parameter_t **parameters, s
         case GCS_NODE_TYPE_LINE:
             len = 2;
             break;
+        case GCS_NODE_TYPE_CIRCLE:
+            len = 3;
+            break;
         default:
             return -1;
         }
@@ -224,6 +251,9 @@ int gcs_graph_get_parameters(gcs_graph_t *graph, gcs_parameter_t **parameters, s
         case GCS_NODE_TYPE_POINT:
         case GCS_NODE_TYPE_LINE:
             len = 2;
+            break;
+        case GCS_NODE_TYPE_CIRCLE:
+            len = 3;
             break;
         default:
             return -1;
@@ -257,9 +287,13 @@ int gcs_dof_analysis(gcs_graph_t *graph)
         {
         case GCS_NODE_TYPE_POINT:
         case GCS_NODE_TYPE_LINE:
-        default:
             node->dof = 2;
             break;
+        case GCS_NODE_TYPE_CIRCLE:
+            node->dof = 3;
+            break;
+        default:
+            return -1;
         }
 
         int num_values = node->dof;
@@ -276,6 +310,9 @@ int gcs_dof_analysis(gcs_graph_t *graph)
                 case GCS_CONSTRAINT_TYPE_DISTANCE_X:
                 case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
                 case GCS_CONSTRAINT_TYPE_ANGLE:
+                case GCS_CONSTRAINT_TYPE_RADIUS:
+                case GCS_CONSTRAINT_TYPE_ON_EDGE:
+                case GCS_CONSTRAINT_TYPE_TANGENT:
                     node->dof -= 1;
                     constraint_dof += constraint->nodes[0] == node;
                     break;
@@ -332,15 +369,15 @@ double gcs_error(gcs_graph_t *graph)
         switch (constraint->type)
         {
         case GCS_CONSTRAINT_TYPE_DISTANCE:
-            if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
+            if ((constraint->nodes[0]->type == GCS_NODE_TYPE_POINT || constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE) && (constraint->nodes[1]->type == GCS_NODE_TYPE_POINT || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE))
             {
                 double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
                 error += fabs(pow(distance - constraint->value, 2.0));
             }
-            else if ((constraint->nodes[0]->type == GCS_NODE_TYPE_LINE && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT) || (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_LINE))
+            else if ((constraint->nodes[0]->type == GCS_NODE_TYPE_LINE && (constraint->nodes[1]->type == GCS_NODE_TYPE_POINT || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE)) || ((constraint->nodes[0]->type == GCS_NODE_TYPE_POINT || constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE) && constraint->nodes[1]->type == GCS_NODE_TYPE_LINE))
             {
                 gcs_node_t *line = constraint->nodes[0]->type == GCS_NODE_TYPE_LINE ? constraint->nodes[0] : constraint->nodes[1];
-                gcs_node_t *point = constraint->nodes[1]->type == GCS_NODE_TYPE_POINT ? constraint->nodes[1] : constraint->nodes[0];
+                gcs_node_t *point = (constraint->nodes[1]->type == GCS_NODE_TYPE_POINT || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE) ? constraint->nodes[1] : constraint->nodes[0];
                 double distance = gcs_distance_line_point(line, point);
                 error += pow(distance - constraint->value, 2.0);
             }
@@ -348,7 +385,7 @@ double gcs_error(gcs_graph_t *graph)
                 return -1.0;
             break;
         case GCS_CONSTRAINT_TYPE_DISTANCE_X:
-            if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
+            if ((constraint->nodes[0]->type == GCS_NODE_TYPE_POINT || constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE) && (constraint->nodes[1]->type == GCS_NODE_TYPE_POINT || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE))
             {
                 double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
                 error += pow(distance - constraint->value, 2.0);
@@ -357,7 +394,7 @@ double gcs_error(gcs_graph_t *graph)
                 return -1.0;
             break;
         case GCS_CONSTRAINT_TYPE_DISTANCE_Y:
-            if (constraint->nodes[0]->type == GCS_NODE_TYPE_POINT && constraint->nodes[1]->type == GCS_NODE_TYPE_POINT)
+            if ((constraint->nodes[0]->type == GCS_NODE_TYPE_POINT || constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE) && (constraint->nodes[1]->type == GCS_NODE_TYPE_POINT || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE))
             {
                 double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
                 error += pow(distance - constraint->value, 2.0);
@@ -370,6 +407,37 @@ double gcs_error(gcs_graph_t *graph)
             {
                 double angle = gcs_angle_two_lines(constraint->nodes[0], constraint->nodes[1]);
                 error += pow(fmin(fabs(angle - constraint->value), fabs((2 * GCS_PI - angle) - constraint->value)), 2.0);
+            }
+            else
+                return -1.0;
+            break;
+        case GCS_CONSTRAINT_TYPE_RADIUS:
+            if (constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE)
+            {
+                double radius = constraint->nodes[0]->values[2];
+                error += pow(radius - constraint->value, 2.0);
+            }
+            else
+                return -1.0;
+            break;
+        case GCS_CONSTRAINT_TYPE_ON_EDGE:
+            if ((constraint->nodes[0]->type == GCS_NODE_TYPE_POINT || constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE) && (constraint->nodes[1]->type == GCS_NODE_TYPE_POINT || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE))
+            {
+                double distance = gcs_distance_two_points(constraint->nodes[0], constraint->nodes[1]);
+
+                gcs_node_t *circle = constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE ? constraint->nodes[0] : constraint->nodes[1];
+                error += fabs(pow(distance - circle->values[2], 2.0));
+            }
+            else
+                return -1.0;
+            break;
+        case GCS_CONSTRAINT_TYPE_TANGENT:
+            if ((constraint->nodes[0]->type == GCS_NODE_TYPE_LINE && constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE) || (constraint->nodes[0]->type == GCS_NODE_TYPE_CIRCLE && constraint->nodes[1]->type == GCS_NODE_TYPE_LINE))
+            {
+                gcs_node_t *line = constraint->nodes[0]->type == GCS_NODE_TYPE_LINE ? constraint->nodes[0] : constraint->nodes[1];
+                gcs_node_t *circle = (constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE || constraint->nodes[1]->type == GCS_NODE_TYPE_CIRCLE) ? constraint->nodes[1] : constraint->nodes[0];
+                double distance = gcs_distance_line_point(line, circle);
+                error += pow(distance - circle->values[2], 2.0);
             }
             else
                 return -1.0;
@@ -460,6 +528,8 @@ int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations)
             *(parameters[j].value) -= rate * gradient[j];
             if (parameters[j].type == GCS_PARAMETER_TYPE_ANGLE)
                 *(parameters[j].value) = gcs_normalize_angle(*(parameters[j].value));
+            else
+                *(parameters[j].value) = max(*(parameters[j].value), 0);
         }
     }
 
