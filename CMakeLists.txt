@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 file(GLOB SOURCES "src/*.c")
 add_library(gcs STATIC ${SOURCES})
-target_include_directories(gcs PRIVATE "include")
-target_link_libraries(gcs)
+target_include_directories(gcs PUBLIC "include")
+target_link_libraries(gcs PUBLIC)
 
 file(GLOB TEST_GCS_SOURCES "tests/test_gcs.c")
 add_executable(test_gcs ${TEST_GCS_SOURCES})
