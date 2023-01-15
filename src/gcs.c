@@ -549,7 +549,7 @@ int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations)
             if (parameters[j].type == GCS_PARAMETER_TYPE_ANGLE)
                 *(parameters[j].value) = gcs_normalize_angle(*(parameters[j].value));
             else
-                *(parameters[j].value) = max(*(parameters[j].value), 0);
+                *(parameters[j].value) = *(parameters[j].value) > 0 ? *(parameters[j].value) : 0;
         }
     }
 
