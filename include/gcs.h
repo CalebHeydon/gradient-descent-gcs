@@ -28,6 +28,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -106,3 +111,7 @@ double gcs_angle_two_lines(gcs_node_t *line1, gcs_node_t *line2);
 double gcs_error(gcs_graph_t *graph);
 int gcs_gradient(gcs_graph_t *graph, gcs_parameter_t *parameters, size_t num_parameters, double *gradient);
 int gcs_solve(gcs_graph_t *graph, double rate, int max_iterations);
+
+#ifdef __cplusplus
+}
+#endif
